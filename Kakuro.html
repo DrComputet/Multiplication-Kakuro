@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multiplication Kakuro</title>
+    <style>
+        :root {
+            --tb-bg: #121318;
+            --tb-card: #1e2029;
+            --tb-card-border: #2e3240;
+            --tb-accent: #00d2ff;
+            --tb-accent-hover: #00a3cc;
+            --tb-green: #00e676;
+            --tb-red: #ff5252;
+            --tb-yellow: #ffd600;
+            --tb-text: #ffffff;
+            --tb-subtext: #90a4ae;
+            --tb-grid-bg: #0d0e12;
+            --tb-input-bg: #282c37;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--tb-bg); color: var(--tb-text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px; }
+
+        /* Header */
+        header { width: 100%; max-width: 650px; background: var(--tb-card); border: 1px solid var(--tb-card-border); border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--tb-accent), #0072ff); color: #000; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .user-details .name { font-weight: 700; font-size: 0.95rem; }
+        .user-details .app-tag { font-size: 0.75rem; color: var(--tb-accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .stat-badge-group { display: flex; gap: 10px; }
+        .stat-badge { background: var(--tb-bg); border: 1px solid var(--tb-card-border); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; text-align: center; }
+        .stat-badge span { color: var(--tb-accent); font-size: 0.95rem; display: block; }
+
+        /* Tabs */
+        .tab-bar { width: 100%; max-width: 650px; display: flex; background: var(--tb-card); border-radius: 10px; padding: 4px; border: 1px solid var(--tb-card-border); margin: 10px 0; }
+        .tab-btn { flex: 1; padding: 10px 0; border: none; background: transparent; color: var(--tb-subtext); font-weight: 700; font-size: 0.75rem; border-radius: 7px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .tab-btn.active { background: var(--tb-accent); color: #000; }
+
+        /* Workspace */
+        .workspace { width: 100%; max-width: 650px; background: var(--tb-card); border: 1px solid var(--tb-card-border); border-radius: 14px; padding: 16px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+        .view-panel { width: 100%; display: none; flex-direction: column; align-items: center; }
+        .view-panel.active { display: flex; }
+
+        .panel-title { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 6px; text-transform: uppercase; }
+        .panel-subtitle { font-size: 0.85rem; color: var(--tb-subtext); margin-bottom: 20px; text-align: center; }
+        
+        .tb-btn { width: 100%; padding: 14px; border: none; border-radius: 9px; font-weight: 800; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.15s; }
+        .tb-btn-primary { background: var(--tb-accent); color: #000; }
+        .tb-btn-success { background: var(--tb-green); color: #000; }
+        .tb-btn-danger { background: var(--tb-red); color: #fff; }
+        .tb-btn-outline { background: transparent; border: 1px solid var(--tb-card-border); color: var(--tb-text); }
+
+        /* Homepage */
+        .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 20px; }
+        .home-card { background: var(--tb-grid-bg); border: 1px solid var(--tb-card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+        .home-card:hover { border-color: var(--tb-accent); background: #151821; }
+        .home-card-icon { font-size: 2rem; margin-bottom: 8px; }
+        .home-card-title { font-size: 0.9rem; font-weight: 800; color: #fff; }
+
+        /* Levels */
+        .level-list { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 15px; }
+        .level-card { background: var(--tb-grid-bg); border: 1px solid var(--tb-card-border); padding: 14px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .level-card.selected { border-color: var(--tb-accent); background: #16222f; }
+        .level-info .title { font-weight: 800; font-size: 0.95rem; }
+        .level-info .desc { font-size: 0.75rem; color: var(--tb-subtext); }
+
+        /* Game Board */
+        .game-status-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--tb-grid-bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--tb-card-border); margin-bottom: 15px; font-weight: 700; font-size: 0.85rem; }
+        
+        .board-container { width: 100%; display: flex; justify-content: center; align-items: center; overflow-x: auto; padding: 10px 0; }
+        .kakuro-board { display: grid; gap: 6px; background: var(--tb-grid-bg); padding: 12px; border-radius: 12px; border: 2px solid var(--tb-card-border); }
+        
+        .grid-node { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .node-empty { background: transparent; }
+        .node-target { background: #252a37; border: 1px solid #3a4155; display: flex; flex-direction: column; justify-content: center; padding: 2px; }
+        .target-col { color: var(--tb-accent); text-align: right; width: 100%; padding-right: 2px; }
+        .target-row { color: var(--tb-yellow); text-align: left; width: 100%; padding-left: 2px; }
+        .node-input { background: var(--tb-input-bg); border: 2px solid var(--tb-card-border); color: #fff; outline: none; text-align: center; font-weight: 800; border-radius: 6px; transition: background-color 0.2s, border-color 0.2s; }
+        .node-input:focus { border-color: var(--tb-accent); background: #1c2333; }
+
+        /* Duplicate Error Highlight */
+        .node-input.duplicate-error {
+            background-color: #5a1a1a !important;
+            border-color: #ff4d4d !important;
+            color: #ff4d4d !important;
+        }
+
+        /* Dynamic Sizes */
+        .grid-size-3 .grid-node { width: 64px; height: 64px; font-size: 1.2rem; }
+        .grid-size-3 .target-col, .grid-size-3 .target-row { font-size: 0.8rem; }
+        
+        .grid-size-4 .grid-node { width: 52px; height: 52px; font-size: 1.05rem; }
+        .grid-size-4 .target-col, .grid-size-4 .target-row { font-size: 0.7rem; }
+
+        .grid-size-5 .grid-node { width: 42px; height: 42px; font-size: 0.95rem; }
+        .grid-size-5 .target-col, .grid-size-5 .target-row { font-size: 0.6rem; }
+
+        .action-row { display: flex; gap: 10px; width: 100%; margin-top: 10px; }
+
+        /* Alerts */
+        .alert-box { width: 100%; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 12px; display: none; }
+        .alert-box.success { background: rgba(0, 230, 118, 0.15); color: var(--tb-green); border: 1px solid var(--tb-green); }
+        .alert-box.error { background: rgba(255, 82, 82, 0.15); color: var(--tb-red); border: 1px solid var(--tb-red); }
+
+        /* Scorecard */
+        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 15px; }
+        .metric-card { background: var(--tb-grid-bg); border: 1px solid var(--tb-card-border); padding: 12px; border-radius: 10px; text-align: center; }
+        .metric-card label { font-size: 0.7rem; color: var(--tb-subtext); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+        .metric-card .value { font-size: 1.4rem; font-weight: 800; color: var(--tb-accent); }
+
+        .score-table-container { width: 100%; max-height: 200px; overflow-y: auto; background: var(--tb-grid-bg); border: 1px solid var(--tb-card-border); border-radius: 8px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left; }
+        th { background: #1c202b; color: var(--tb-subtext); padding: 10px; font-weight: 700; position: sticky; top: 0; }
+        td { padding: 8px 10px; border-bottom: 1px solid var(--tb-card-border); }
+
+        /* Accounts */
+        .account-list { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .account-item { background: var(--tb-grid-bg); border: 1px solid var(--tb-card-border); padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .account-item.active { border-color: var(--tb-accent); }
+        .tb-input-field { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--tb-card-border); background: var(--tb-grid-bg); color: #fff; font-size: 0.9rem; text-align: center; margin-bottom: 10px; outline: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="user-profile" onclick="switchTab('account')">
+        <div class="user-avatar" id="avatar-icon">A</div>
+        <div class="user-details">
+            <div class="name" id="user-display-name">Active User</div>
+            <div class="app-tag">Welcome</div>
+        </div>
+    </div>
+    <div class="stat-badge-group">
+        <div class="stat-badge">LEVEL <span id="lbl-level">1</span></div>
+        <div class="stat-badge">SCORE <span id="lbl-score">0</span></div>
+    </div>
+</header>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+    <button class="tab-btn" onclick="switchTab('levels')">Levels</button>
+    <button class="tab-btn" onclick="switchTab('game')">Arena</button>
+    <button class="tab-btn" onclick="switchTab('report')">Scorecard</button>
+    <button class="tab-btn" onclick="switchTab('account')">Accounts</button>
+</div>
+
+<div class="workspace">
+    <div id="view-home" class="view-panel active">
+        <div class="panel-title">Multiplication Portal</div>
+        <div class="panel-subtitle">Select an action to launch your diagnostic session</div>
+
+        <div class="home-grid">
+            <div class="home-card" onclick="switchTab('game')">
+                <div class="home-card-icon">🎯</div>
+                <div class="home-card-title">Quick Play</div>
+            </div>
+            <div class="home-card" onclick="switchTab('levels')">
+                <div class="home-card-icon">⚡</div>
+                <div class="home-card-title">Select Level</div>
+            </div>
+            <div class="home-card" onclick="switchTab('report')">
+                <div class="home-card-icon">📊</div>
+                <div class="home-card-title">Scorecard</div>
+            </div>
+            <div class="home-card" onclick="switchTab('account')">
+                <div class="home-card-icon">👤</div>
+                <div class="home-card-title">Accounts</div>
+            </div>
+        </div>
+
+        <button class="tb-btn tb-btn-primary" onclick="startNewSession()">LAUNCH PUZZLE SESSION</button>
+    </div>
+
+    <div id="view-levels" class="view-panel">
+        <div class="panel-title">Select Level</div>
+        <div class="panel-subtitle">Grid dimensions expand as difficulty increases</div>
+
+        <div class="level-list">
+            <div class="level-card" id="lvl-btn-1" onclick="selectLevel(1)">
+                <div class="level-info"><div class="title">Level 1: Easy</div><div class="desc">3x3 Grid (2x2 Inputs) | Factors 1–9</div></div>
+                <div class="stat-badge">3x3</div>
+            </div>
+            <div class="level-card" id="lvl-btn-2" onclick="selectLevel(2)">
+                <div class="level-info"><div class="title">Level 2: Medium</div><div class="desc">4x4 Grid (3x3 Inputs) | Factors 1–9</div></div>
+                <div class="stat-badge">4x4</div>
+            </div>
+            <div class="level-card" id="lvl-btn-3" onclick="selectLevel(3)">
+                <div class="level-info"><div class="title">Level 3: Hard</div><div class="desc">5x5 Grid (4x4 Inputs) | Factors 1–9</div></div>
+                <div class="stat-badge">5x5</div>
+            </div>
+        </div>
+
+        <button class="tb-btn tb-btn-primary" onclick="switchTab('game')">CONFIRM & START</button>
+    </div>
+
+    <div id="view-game" class="view-panel">
+        <div class="game-status-bar">
+            <div>LEVEL <span id="game-lbl-lvl" style="color:var(--tb-accent)">1</span></div>
+            <div>TIME: <span id="game-timer" style="color:var(--tb-yellow)">00:00</span></div>
+        </div>
+
+        <div class="board-container">
+            <div id="board" class="kakuro-board"></div>
+        </div>
+
+        <div id="alert" class="alert-box"></div>
+
+        <div class="action-row">
+            <button class="tb-btn tb-btn-success" onclick="verifySolution()">SUBMIT</button>
+            <button class="tb-btn tb-btn-primary" onclick="startNewSession()">SKIP / NEXT</button>
+        </div>
+    </div>
+
+    <div id="view-report" class="view-panel">
+        <div class="panel-title">Diagnostic Scorecard</div>
+        <div class="panel-subtitle">Historical evaluation and completion tracking</div>
+
+        <div class="analytics-grid">
+            <div class="metric-card"><label>Solved</label><div class="value" id="rep-solved">0</div></div>
+            <div class="metric-card"><label>Accuracy</label><div class="value" id="rep-acc">0%</div></div>
+            <div class="metric-card"><label>Avg Time</label><div class="value" id="rep-avgtime">0s</div></div>
+            <div class="metric-card"><label>Total Score</label><div class="value" id="rep-pts">0</div></div>
+        </div>
+
+        <div class="score-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Level</th>
+                        <th>Time</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="score-table-body">
+                </tbody>
+            </table>
+        </div>
+
+        <button class="tb-btn tb-btn-outline" onclick="clearScorecardHistory()">CLEAR SCORECARD LOGS</button>
+    </div>
+
+    <div id="view-account" class="view-panel">
+        <div class="panel-title">Manage Accounts</div>
+        <div class="panel-subtitle">Switch active profile or add a new learner</div>
+
+        <div class="account-list" id="account-list-container">
+        </div>
+
+        <input type="text" id="input-new-account" class="tb-input-field" placeholder="Enter New Account Name" />
+        <button class="tb-btn tb-btn-primary" style="margin-bottom: 10px;" onclick="createAccount()">ADD NEW ACCOUNT</button>
+        <button class="tb-btn tb-btn-danger" onclick="deleteCurrentAccount()">DELETE CURRENT ACCOUNT</button>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('tb_kakuro_db')) || {
+        activeUser: 'Student 1',
+        users: {
+            'Student 1': { level: 1, score: 0, solved: 0, attempts: 0, logs: [] }
+        }
+    };
+
+    let sessionTimer = null;
+    let secondsElapsed = 0;
+    let targetRowProducts = [];
+    let targetColProducts = [];
+    let gridDimension = 2; // Default 2x2 factors (3x3 grid)
+
+    function saveDB() {
+        localStorage.setItem('tb_kakuro_db', JSON.stringify(db));
+        refreshHeaderUI();
+    }
+
+    function getCurrentUserData() {
+        if (!db.users[db.activeUser]) {
+            db.users[db.activeUser] = { level: 1, score: 0, solved: 0, attempts: 0, logs: [] };
+        }
+        return db.users[db.activeUser];
+    }
+
+    function refreshHeaderUI() {
+        const user = getCurrentUserData();
+        document.getElementById('user-display-name').innerText = db.activeUser;
+        document.getElementById('avatar-icon').innerText = db.activeUser.charAt(0).toUpperCase();
+        document.getElementById('lbl-level').innerText = user.level;
+        document.getElementById('lbl-score').innerText = user.score;
+        document.getElementById('game-lbl-lvl').innerText = user.level;
+        
+        document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
+        const activeCard = document.getElementById(`lvl-btn-${user.level}`);
+        if (activeCard) activeCard.classList.add('selected');
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(`view-${tabName}`).classList.add('active');
+        
+        const btns = document.querySelectorAll('.tab-btn');
+        const map = { 'home': 0, 'levels': 1, 'game': 2, 'report': 3, 'account': 4 };
+        if (btns[map[tabName]]) btns[map[tabName]].classList.add('active');
+
+        if (tabName === 'game') {
+            if (!sessionTimer) startNewSession();
+        } else {
+            stopTimer();
+        }
+
+        if (tabName === 'report') renderScorecard();
+        if (tabName === 'account') renderAccountList();
+    }
+
+    function startTimer() {
+        stopTimer();
+        secondsElapsed = 0;
+        document.getElementById('game-timer').innerText = "00:00";
+        sessionTimer = setInterval(() => {
+            secondsElapsed++;
+            const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const s = String(secondsElapsed % 60).padStart(2, '0');
+            document.getElementById('game-timer').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (sessionTimer) {
+            clearInterval(sessionTimer);
+            sessionTimer = null;
+        }
+    }
+
+    function selectLevel(lvl) {
+        const user = getCurrentUserData();
+        user.level = lvl;
+        saveDB();
+        switchTab('game');
+        startNewSession();
+    }
+
+    /* Helper: Checks if array contains duplicate non-empty values */
+    function hasDuplicates(array) {
+        const filled = array.filter(val => val !== "" && val !== null);
+        return new Set(filled).size !== filled.length;
+    }
+
+    /* Duplicate Checker Function */
+    function validateDuplicates() {
+        const inputs = document.querySelectorAll('.node-input');
+        inputs.forEach(input => input.classList.remove('duplicate-error'));
+
+        let foundDuplicate = false;
+
+        // Check Rows
+        for (let r = 0; r < gridDimension; r++) {
+            const rowInputs = Array.from(document.querySelectorAll(`.node-input[data-row="${r}"]`));
+            const rowValues = rowInputs.map(inp => inp.value);
+
+            if (hasDuplicates(rowValues)) {
+                foundDuplicate = true;
+                rowInputs.forEach(inp => {
+                    if (inp.value !== "") inp.classList.add('duplicate-error');
+                });
+            }
+        }
+
+        // Check Columns
+        for (let c = 0; c < gridDimension; c++) {
+            const colInputs = Array.from(document.querySelectorAll(`.node-input[data-col="${c}"]`));
+            const colValues = colInputs.map(inp => inp.value);
+
+            if (hasDuplicates(colValues)) {
+                foundDuplicate = true;
+                colInputs.forEach(inp => {
+                    if (inp.value !== "") inp.classList.add('duplicate-error');
+                });
+            }
+        }
+
+        return foundDuplicate;
+    }
+
+    /* Solver algorithm to enforce unique solutions */
+    function countValidSolutions(rowTargets, colTargets, minF, maxF) {
+        let solutionsCount = 0;
+        let tempGrid = Array.from({ length: gridDimension }, () => Array(gridDimension).fill(0));
+
+        function solveCell(r, c) {
+            if (solutionsCount > 1) return;
+
+            if (r === gridDimension) {
+                for (let col = 0; col < gridDimension; col++) {
+                    let prod = 1;
+                    let colVals = [];
+                    for (let row = 0; row < gridDimension; row++) {
+                        prod *= tempGrid[row][col];
+                        colVals.push(tempGrid[row][col]);
+                    }
+                    if (prod !== colTargets[col] || new Set(colVals).size !== gridDimension) return;
+                }
+                solutionsCount++;
+                return;
+            }
+
+            let nextR = c === gridDimension - 1 ? r + 1 : r;
+            let nextC = c === gridDimension - 1 ? 0 : c + 1;
+
+            for (let val = minF; val <= maxF; val++) {
+                // Kakuro rule: No duplicate values in row
+                if (tempGrid[r].slice(0, c).includes(val)) continue;
+
+                // Kakuro rule: No duplicate values in col
+                let colValsSoFar = [];
+                for (let i = 0; i < r; i++) colValsSoFar.push(tempGrid[i][c]);
+                if (colValsSoFar.includes(val)) continue;
+
+                let currentRProd = 1;
+                for (let i = 0; i < c; i++) currentRProd *= tempGrid[r][i];
+                currentRProd *= val;
+
+                if (c === gridDimension - 1) {
+                    if (currentRProd !== rowTargets[r]) continue;
+                } else {
+                    if (rowTargets[r] % currentRProd !== 0) continue;
+                }
+
+                let currentCProd = 1;
+                for (let i = 0; i < r; i++) currentCProd *= tempGrid[i][c];
+                currentCProd *= val;
+
+                if (r === gridDimension - 1) {
+                    if (currentCProd !== colTargets[c]) continue;
+                } else {
+                    if (colTargets[c] % currentCProd !== 0) continue;
+                }
+
+                tempGrid[r][c] = val;
+                solveCell(nextR, nextC);
+                tempGrid[r][c] = 0;
+            }
+        }
+
+        solveCell(0, 0);
+        return solutionsCount;
+    }
+
+    function startNewSession() {
+        clearAlert();
+        startTimer();
+        const user = getCurrentUserData();
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+
+        if (user.level === 1) gridDimension = 2;
+        else if (user.level === 2) gridDimension = 3;
+        else gridDimension = 4;
+
+        const totalGridCols = gridDimension + 1;
+        board.className = `kakuro-board grid-size-${totalGridCols}`;
+        board.style.gridTemplateColumns = `repeat(${totalGridCols}, 1fr)`;
+
+        let minF = 1, maxF = 9;
+
+        let isUnique = false;
+        let attempts = 0;
+
+        while (!isUnique && attempts < 500) {
+            attempts++;
+            let currentMatrix = [];
+            
+            for (let r = 0; r < gridDimension; r++) {
+                let row = [];
+                let availableDigits = Array.from({length: maxF - minF + 1}, (_, i) => minF + i);
+                for (let c = 0; c < gridDimension; c++) {
+                    let randIdx = Math.floor(Math.random() * availableDigits.length);
+                    row.push(availableDigits.splice(randIdx, 1)[0]);
+                }
+                currentMatrix.push(row);
+            }
+
+            targetRowProducts = [];
+            for (let r = 0; r < gridDimension; r++) {
+                let prod = 1;
+                for (let c = 0; c < gridDimension; c++) prod *= currentMatrix[r][c];
+                targetRowProducts.push(prod);
+            }
+
+            targetColProducts = [];
+            for (let c = 0; c < gridDimension; c++) {
+                let prod = 1;
+                for (let r = 0; r < gridDimension; r++) prod *= currentMatrix[r][c];
+                targetColProducts.push(prod);
+            }
+
+            if (countValidSolutions(targetRowProducts, targetColProducts, minF, maxF) === 1) {
+                isUnique = true;
+            }
+        }
+
+        const emptyNode = document.createElement('div');
+        emptyNode.className = 'grid-node node-empty';
+        board.appendChild(emptyNode);
+
+        for (let c = 0; c < gridDimension; c++) {
+            const targetNode = document.createElement('div');
+            targetNode.className = 'grid-node node-target';
+            targetNode.innerHTML = `<div class="target-col">↓${targetColProducts[c]}</div>`;
+            board.appendChild(targetNode);
+        }
+
+        for (let r = 0; r < gridDimension; r++) {
+            const rowNode = document.createElement('div');
+            rowNode.className = 'grid-node node-target';
+            rowNode.innerHTML = `<div class="target-row">→${targetRowProducts[r]}</div>`;
+            board.appendChild(rowNode);
+
+            for (let c = 0; c < gridDimension; c++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'grid-node node-input';
+                input.id = `input-${r}-${c}`;
+                input.dataset.row = r;
+                input.dataset.col = c;
+                
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length > 1) {
+                        e.target.value = e.target.value.slice(-1);
+                    }
+                    if (e.target.value === '0') {
+                        e.target.value = '';
+                    }
+                    validateDuplicates();
+                });
+
+                board.appendChild(input);
+            }
+        }
+    }
+
+    function verifySolution() {
+        const user = getCurrentUserData();
+        user.attempts++;
+
+        let isFilled = true;
+        let gridValues = [];
+
+        for (let r = 0; r < gridDimension; r++) {
+            gridValues[r] = [];
+            for (let c = 0; c < gridDimension; c++) {
+                const inp = document.getElementById(`input-${r}-${c}`);
+                const val = parseInt(inp.value, 10);
+                if (isNaN(val)) {
+                    isFilled = false;
+                } else {
+                    gridValues[r][c] = val;
+                }
+            }
+        }
+
+        if (!isFilled) {
+            showAlert('Please complete all grid cells before submitting.', 'error');
+            return;
+        }
+
+        // Rule 1: Check for duplicate digits in any row or column
+        if (validateDuplicates()) {
+            showAlert('Rule Violation: Duplicate numbers are not allowed in any row or column.', 'error');
+            user.logs.unshift({
+                date: new Date().toLocaleDateString(),
+                level: user.level,
+                time: secondsElapsed,
+                result: 'Failed'
+            });
+            saveDB();
+            return;
+        }
+
+        // Rule 2: Check row products match target clues
+        for (let r = 0; r < gridDimension; r++) {
+            let rowProd = 1;
+            for (let c = 0; c < gridDimension; c++) {
+                rowProd *= gridValues[r][c];
+            }
+            if (rowProd !== targetRowProducts[r]) {
+                showAlert('Incorrect products. Check your math and try again.', 'error');
+                user.logs.unshift({
+                    date: new Date().toLocaleDateString(),
+                    level: user.level,
+                    time: secondsElapsed,
+                    result: 'Failed'
+                });
+                saveDB();
+                return;
+            }
+        }
+
+        // Rule 3: Check column products match target clues
+        for (let c = 0; c < gridDimension; c++) {
+            let colProd = 1;
+            for (let r = 0; r < gridDimension; r++) {
+                colProd *= gridValues[r][c];
+            }
+            if (colProd !== targetColProducts[c]) {
+                showAlert('Incorrect products. Check your math and try again.', 'error');
+                user.logs.unshift({
+                    date: new Date().toLocaleDateString(),
+                    level: user.level,
+                    time: secondsElapsed,
+                    result: 'Failed'
+                });
+                saveDB();
+                return;
+            }
+        }
+
+        // If all checks pass
+        stopTimer();
+        user.solved++;
+        const pointsGained = user.level * 100;
+        user.score += pointsGained;
+        
+        user.logs.unshift({
+            date: new Date().toLocaleDateString(),
+            level: user.level,
+            time: secondsElapsed,
+            result: 'Success'
+        });
+
+        saveDB();
+        showAlert(`EXCELLENT! Correct solution. +${pointsGained} PTS`, 'success');
+    }
+
+    function showAlert(msg, type) {
+        const box = document.getElementById('alert');
+        box.innerText = msg;
+        box.className = `alert-box ${type}`;
+        box.style.display = 'block';
+    }
+
+    function clearAlert() {
+        const box = document.getElementById('alert');
+        box.style.display = 'none';
+    }
+
+    function renderScorecard() {
+        const user = getCurrentUserData();
+        document.getElementById('rep-solved').innerText = user.solved;
+        
+        const accuracy = user.attempts > 0 ? Math.round((user.solved / user.attempts) * 100) : 0;
+        document.getElementById('rep-acc').innerText = `${accuracy}%`;
+
+        const totalTime = user.logs.reduce((acc, l) => acc + l.time, 0);
+        const avgTime = user.logs.length > 0 ? Math.round(totalTime / user.logs.length) : 0;
+        document.getElementById('rep-avgtime').innerText = `${avgTime}s`;
+        
+        document.getElementById('rep-pts').innerText = user.score;
+
+        const tableBody = document.getElementById('score-table-body');
+        tableBody.innerHTML = '';
+        user.logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.date}</td>
+                <td>Level ${log.level}</td>
+                <td>${log.time}s</td>
+                <td style="color:${log.result === 'Success' ? 'var(--tb-green)' : 'var(--tb-red)'}">${log.result}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    function clearScorecardHistory() {
+        const user = getCurrentUserData();
+        user.logs = [];
+        user.solved = 0;
+        user.attempts = 0;
+        user.score = 0;
+        saveDB();
+        renderScorecard();
+    }
+
+    function renderAccountList() {
+        const container = document.getElementById('account-list-container');
+        container.innerHTML = '';
+        Object.keys(db.users).forEach(u => {
+            const div = document.createElement('div');
+            div.className = `account-item ${u === db.activeUser ? 'active' : ''}`;
+            div.innerHTML = `
+                <span style="font-weight:700">${u}</span>
+                <span style="font-size:0.75rem; color:var(--tb-accent)">Level ${db.users[u].level}</span>
+            `;
+            div.onclick = () => {
+                db.activeUser = u;
+                saveDB();
+                renderAccountList();
+            };
+            container.appendChild(div);
+        });
+    }
+
+    function createAccount() {
+        const field = document.getElementById('input-new-account');
+        const name = field.value.trim();
+        if (name && !db.users[name]) {
+            db.users[name] = { level: 1, score: 0, solved: 0, attempts: 0, logs: [] };
+            db.activeUser = name;
+            field.value = '';
+            saveDB();
+            renderAccountList();
+        }
+    }
+
+    function deleteCurrentAccount() {
+        if (Object.keys(db.users).length <= 1) {
+            alert("At least one account must remain.");
+            return;
+        }
+        delete db.users[db.activeUser];
+        db.activeUser = Object.keys(db.users)[0];
+        saveDB();
+        renderAccountList();
+    }
+
+    refreshHeaderUI();
+</script>
+</body>
+</html>
