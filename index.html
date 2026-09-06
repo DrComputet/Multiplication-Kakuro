@@ -48,6 +48,7 @@
         .panel-subtitle { font-size: 0.85rem; color: var(--tb-subtext); margin-bottom: 20px; text-align: center; }
         
         .tb-btn { width: 100%; padding: 14px; border: none; border-radius: 9px; font-weight: 800; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.15s; }
+        .tb-btn:active { transform: scale(0.98); }
         .tb-btn-primary { background: var(--tb-accent); color: #000; }
         .tb-btn-success { background: var(--tb-green); color: #000; }
         .tb-btn-danger { background: var(--tb-red); color: #fff; }
@@ -80,6 +81,11 @@
         .target-row { color: var(--tb-yellow); text-align: left; width: 100%; padding-left: 2px; }
         .node-input { background: var(--tb-input-bg); border: 2px solid var(--tb-card-border); color: #fff; outline: none; text-align: center; font-weight: 800; border-radius: 6px; transition: background-color 0.2s, border-color 0.2s; }
         .node-input:focus { border-color: var(--tb-accent); background: #1c2333; }
+
+        /* Hide Number Arrows/Spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
 
         /* Duplicate Error Highlight */
         .node-input.duplicate-error {
@@ -171,7 +177,7 @@
             </div>
         </div>
 
-        <button class="tb-btn tb-btn-primary" onclick="startNewSession()">LAUNCH PUZZLE SESSION</button>
+        <button class="tb-btn tb-btn-primary" onclick="switchTab('game')">LAUNCH PUZZLE SESSION</button>
     </div>
 
     <div id="view-levels" class="view-panel">
@@ -468,7 +474,7 @@
         let isUnique = false;
         let attempts = 0;
 
-        while (!isUnique && attempts < 500) {
+        while (!isUnique && attempts < 300) {
             attempts++;
             let currentMatrix = [];
             
@@ -534,6 +540,24 @@
                         e.target.value = '';
                     }
                     validateDuplicates();
+                });
+
+                // Arrow Navigation
+                input.addEventListener('keydown', (e) => {
+                    let currR = parseInt(e.target.dataset.row);
+                    let currC = parseInt(e.target.dataset.col);
+
+                    if (e.key === 'ArrowRight' && currC < gridDimension - 1) {
+                        document.getElementById(`input-${currR}-${currC + 1}`).focus();
+                    } else if (e.key === 'ArrowLeft' && currC > 0) {
+                        document.getElementById(`input-${currR}-${currC - 1}`).focus();
+                    } else if (e.key === 'ArrowDown' && currR < gridDimension - 1) {
+                        document.getElementById(`input-${currR + 1}-${currC}`).focus();
+                    } else if (e.key === 'ArrowUp' && currR > 0) {
+                        document.getElementById(`input-${currR - 1}-${currC}`).focus();
+                    } else if (e.key === 'Enter') {
+                        verifySolution();
+                    }
                 });
 
                 board.appendChild(input);
@@ -715,17 +739,23 @@
     }
 
     function deleteCurrentAccount() {
-        if (Object.keys(db.users).length <= 1) {
-            alert("At least one account must remain.");
+        const userKeys = Object.keys(db.users);
+        if (userKeys.length <= 1) {
+            alert("Cannot delete the only remaining account.");
             return;
         }
-        delete db.users[db.activeUser];
-        db.activeUser = Object.keys(db.users)[0];
-        saveDB();
-        renderAccountList();
+
+        if (confirm(`Are you sure you want to delete profile "${db.activeUser}"?`)) {
+            delete db.users[db.activeUser];
+            db.activeUser = Object.keys(db.users)[0];
+            saveDB();
+            renderAccountList();
+        }
     }
 
+    // Initialize application UI
     refreshHeaderUI();
 </script>
+
 </body>
 </html>
