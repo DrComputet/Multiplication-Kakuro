@@ -1,16 +1,30 @@
 {
-  "name": "Multiplication Kakuro",
   "short_name": "Kakuro",
+  "name": "Multiplication Kakuro",
   "description": "A single-digit multiplication Kakuro math puzzle app.",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
   "icons": [
     {
-      "src": "App Icon.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1317x599",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#121318",
+  "theme_color": "#121318",
+  "display": "standalone",
+  "orientation": "portrait"
 }
